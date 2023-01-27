@@ -15,6 +15,12 @@
     ]
   },
   "context": {
+    "region": "eu-central-1",
+    "dev":{
+      "account": "320722179933",
+      "app_name": "postnl_eb_assignment",
+      "team": "eb"
+    },
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
