@@ -18,11 +18,11 @@ class PostnlEventBrokerPocStack(Stack):
         Step 1. Create IAM Role for Lambda Function
         """
         iam_role_name = (
-            "iamrole-"
+            "iamrole_"
             + self.node.try_get_context(deploy_environment)["app_name"]
-            + "-"
+            + "_"
             + self.node.try_get_context(deploy_environment)["team"]
-            + "-"
+            + "_"
             + deploy_environment
         )
         lambda_iam_role = IamRole(
@@ -35,11 +35,11 @@ class PostnlEventBrokerPocStack(Stack):
         Step 2. Create producer lambda function to integrate with api gateway
         """
         lambda_function_name = (
-            "lambda-"
+            "lambda_"
             + self.node.try_get_context(deploy_environment)["app_name"]
-            + "-"
+            + "_"
             + self.node.try_get_context(deploy_environment)["team"]
-            + "-"
+            + "_"
             + deploy_environment
         )
         eb_producer_lambda = LambdaFunction(
@@ -50,13 +50,21 @@ class PostnlEventBrokerPocStack(Stack):
         Step x. Create api gateway to get details of producers to create publish events
         """
         rest_api_name = (
-            "restapi-"
+            "restapi_"
             + self.node.try_get_context(deploy_environment)["app_name"]
-            + "-"
+            + "_"
             + self.node.try_get_context(deploy_environment)["team"]
-            + "-"
+            + "_"
+            + deploy_environment
+        )
+        usage_plan_name = (
+            "restapi_"
+            + self.node.try_get_context(deploy_environment)["app_name"]
+            + "_"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "_"
             + deploy_environment
         )
         eb_api_gateway = ApiGateway(
-            self, "EBApiGatway", ApiGatewayProps(rest_api_name, eb_producer_lambda.get_lambda_function)
+            self, "EBApiGatway", ApiGatewayProps(deploy_environment, rest_api_name, usage_plan_name, eb_producer_lambda.get_lambda_function)
         )
