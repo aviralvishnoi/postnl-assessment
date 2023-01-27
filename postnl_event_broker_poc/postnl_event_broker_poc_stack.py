@@ -57,6 +57,6 @@ class PostnlEventBrokerPocStack(Stack):
             + "-"
             + deploy_environment
         )
-        # eb_api_gateway = ApiGateway(
-        #     self, "EBApiGatway", ApiGatewayProps(rest_api_name, eb_producer_lambda)
-        # )
+        eb_api_gateway = ApiGateway(
+            self, "EBApiGatway", ApiGatewayProps(rest_api_name, eb_producer_lambda.get_lambda_function)
+        )

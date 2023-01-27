@@ -26,4 +26,4 @@ class ApiGateway(Construct):
             request_templates={"application/json": '{ "statusCode": "200" }'},
         )
 
-        eb_apigateway.root.add_method("POST", eb_integration)
+        eb_apigateway.root.add_method("GET", eb_integration)

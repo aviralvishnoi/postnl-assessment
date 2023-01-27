@@ -16,6 +16,11 @@ class LambdaFunction(Construct):
         super().__init__(scope, id)
         LambdaFunction.__lambda_function = self.create_lambda_function(props)
 
+    @property
+    def get_lambda_function(self):
+        return LambdaFunction.__lambda_function
+
+
     def create_lambda_function(self, props):
         hello_lambda = lambda_function.Function(
             self,
