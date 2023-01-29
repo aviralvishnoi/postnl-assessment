@@ -9,7 +9,7 @@ from custom_constructs.api_gateway import ApiGateway, ApiGatewayProps
 from custom_constructs.lambda_function import LambdaFunction, LambdaProps
 from custom_constructs.iam_role import IamRole, IamRoleProps
 from custom_constructs.dynamodb import DynamoDbTable, DynamoDbTableProps
-
+from custom_constructs.step_function import StepFunction, StepFunctionProps
 
 class PostnlEventBrokerPocStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -60,15 +60,22 @@ class PostnlEventBrokerPocStack(Stack):
             + "_"
             + deploy_environment
         )
+        lambda_environment_variables = {
+                "dynamo_db_table": dynamodb_table_name,
+                "dynamo_table_partition_key": dynamodb_table_partition_key,
+                "dynamo_table_sort_key": dynamodb_table_sort_key
+            }
+        lambda_id = "EBProducerLambda"
+        lambda_code_base = "src/producer_lambda"
         eb_producer_lambda = LambdaFunction(
             self,
             "EBProducerLambda",
             LambdaProps(
                 lambda_function_name,
                 lambda_iam_role.get_lambda_role,
-                dynamodb_table_name,
-                dynamodb_table_partition_key,
-                dynamodb_table_sort_key,
+                lambda_environment_variables,
+                lambda_code_base,
+                lambda_id
             ),
         )
 
@@ -84,7 +91,7 @@ class PostnlEventBrokerPocStack(Stack):
             + deploy_environment
         )
         usage_plan_name = (
-            "restapi_"
+            "usage_plan_"
             + self.node.try_get_context(deploy_environment)["app_name"]
             + "_"
             + self.node.try_get_context(deploy_environment)["team"]
@@ -106,4 +113,22 @@ class PostnlEventBrokerPocStack(Stack):
         """
         dynamodb_table.get_dynamodb_table.grant_read_write_data(
             eb_producer_lambda.get_lambda_function
+        )
+        """
+        Step 6 : Create step function to deploy producer stack
+        """
+        state_machine_name = (
+            "state_machine_"
+            + self.node.try_get_context(deploy_environment)["app_name"]
+            + "_"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "_"
+            + deploy_environment
+        )
+        eb_step_function = StepFunction(
+            self,
+            "EBStepFunction",
+            StepFunctionProps(
+                state_machine_name
+            )
         )

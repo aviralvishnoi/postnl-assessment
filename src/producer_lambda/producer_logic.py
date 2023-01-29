@@ -79,4 +79,5 @@ class ProducerLogic:
             data = self.prepare_data(validated_data, application_type)
             dynamod_db_object = DynamoDb(table_name=DYNAMO_DB_TABLE, data=data)
             dynamod_db_object.load_data_to_dynamo_table()
+            # TODO: Async call to step function
             return True

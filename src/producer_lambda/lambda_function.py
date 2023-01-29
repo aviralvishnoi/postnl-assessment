@@ -7,7 +7,7 @@ def lambda_handler(event, context):
     flag = producer_logic_object.producer_processor()
     if isinstance(flag, bool):
         response = {
-            "statusCode": 200,
+            "statusCode": 201,
             "headers": {"Content-Type": "application/json"},
             "body": '{"message": "Hello, World!"}'
         }

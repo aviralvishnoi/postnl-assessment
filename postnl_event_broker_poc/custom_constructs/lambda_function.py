@@ -7,9 +7,9 @@ from constructs import Construct
 class LambdaProps:
     lambda_name: str
     lambda_iam_role: iam.Role
-    dynamo_db_table: str
-    dynamo_table_partition_key: str
-    dynamo_table_sort_key: str
+    lambda_environment_variables: object
+    lambda_code_base: str
+    lambda_id: str
 
 
 class LambdaFunction(Construct):
@@ -27,16 +27,12 @@ class LambdaFunction(Construct):
     def create_lambda_function(self, props):
         hello_lambda = lambda_function.Function(
             self,
-            "EBProducerLambda",
+            id=f"{props.lambda_id}",
             function_name=f"{props.lambda_name}",
             runtime=lambda_function.Runtime.PYTHON_3_9,
             handler="lambda_function.lambda_handler",
-            code=lambda_function.Code.from_asset("src"),
+            code=lambda_function.Code.from_asset(f"{props.lambda_code_base}"),
             role=props.lambda_iam_role,
-            environment={
-                "dynamo_db_table": f"{props.dynamo_db_table}",
-                "dynamo_table_partition_key": f"{props.dynamo_table_partition_key}",
-                "dynamo_table_sort_key": f"{props.dynamo_table_sort_key}"
-            }
+            environment=props.lambda_environment_variables
         )
         return hello_lambda
