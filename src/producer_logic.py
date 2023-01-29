@@ -32,12 +32,15 @@ class ProducerLogic:
         """
         Adds PARTITION key and SORT key to the body of schema delivered
         """
+        partition_key = data["producer_application_name"]+data["producer_name"]+data["business_unit"]+data["type_of_endpoint"]
         template_to_add_keys = {
-            PARTION_KEY: str(uuid.uuid1()),
-            SORT_KEY: application_type,
+            PARTION_KEY: partition_key,
+            SORT_KEY: application_type
         }
         # merge body and new keys
         data.update(template_to_add_keys)
+        # Change contract event from dict to str
+        data["event_contract"] = json.dumps(data["event_contract"])
         return data
 
     def validate_response(self, data):
@@ -63,11 +66,8 @@ class ProducerLogic:
         2. load data to dynamodb for schema of event type of producers
         """
         body, application_type = self.parse_event()
-        data = self.prepare_data(body, application_type)
-        print("DATA:", data)
-        validated_data = self.validate_response(data)
+        validated_data = self.validate_response(body)
         print(validated_data)
-        
         if (
             validated_data.get("INPUT_VALIDATION_FAILED", False)
             or validated_data.get("TYPE_OF_ENDPOINT_ALLOWED", False)
@@ -76,6 +76,7 @@ class ProducerLogic:
             response_object = ErrorResponse(validated_data)
             return response_object.prepare_error_response(VALID_TYPE_OF_ENDPOINT)
         else:
+            data = self.prepare_data(validated_data, application_type)
             dynamod_db_object = DynamoDb(table_name=DYNAMO_DB_TABLE, data=data)
             dynamod_db_object.load_data_to_dynamo_table()
             return True
