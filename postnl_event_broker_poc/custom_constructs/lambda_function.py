@@ -7,6 +7,9 @@ from constructs import Construct
 class LambdaProps:
     lambda_name: str
     lambda_iam_role: iam.Role
+    dynamo_db_table: str
+    dynamo_table_partition_key: str
+    dynamo_table_sort_key: str
 
 
 class LambdaFunction(Construct):
@@ -30,5 +33,10 @@ class LambdaFunction(Construct):
             handler="lambda_function.lambda_handler",
             code=lambda_function.Code.from_asset("src"),
             role=props.lambda_iam_role,
+            environment={
+                "dynamo_db_table": f"{props.dynamo_db_table}",
+                "dynamo_table_partition_key": f"{props.dynamo_table_partition_key}",
+                "dynamo_table_sort_key": f"{props.dynamo_table_sort_key}"
+            }
         )
         return hello_lambda

@@ -19,7 +19,10 @@
     "dev":{
       "account": "320722179933",
       "app_name": "postnl_eb_assignment",
-      "team": "eb"
+      "team": "eb",
+      "dynamodb_table_name": "application_schema",
+      "table_partition_key": "uuid",
+      "table_sort_key": "application_type"
     },
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,

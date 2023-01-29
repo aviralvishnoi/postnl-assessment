@@ -1,0 +1,22 @@
+{
+    "schema": {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "Producer",
+        "type": "object",
+        "properties": {
+            "producer_name": {
+                "type": "string"
+            },
+            "description": {
+                "type": "string"
+            },
+            "source": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "producer_name",
+            "source"
+        ]
+    }
+}

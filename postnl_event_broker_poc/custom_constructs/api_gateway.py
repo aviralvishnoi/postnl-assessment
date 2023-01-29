@@ -1,7 +1,6 @@
 from aws_cdk import aws_apigateway as _apigateway, aws_lambda as _lambda
 from constructs import Construct
 from dataclasses import dataclass
-from utils import file_reader
 
 
 @dataclass
