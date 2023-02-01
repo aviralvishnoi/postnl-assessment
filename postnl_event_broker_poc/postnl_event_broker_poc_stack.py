@@ -10,6 +10,8 @@ from custom_constructs.lambda_function import LambdaFunction, LambdaProps
 from custom_constructs.iam_role import IamRole, IamRoleProps
 from custom_constructs.dynamodb import DynamoDbTable, DynamoDbTableProps
 from custom_constructs.step_function import StepFunction, StepFunctionProps
+from custom_constructs.s3 import S3Bucket, S3BucketProps
+
 
 class PostnlEventBrokerPocStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -20,7 +22,9 @@ class PostnlEventBrokerPocStack(Stack):
         Step 1. Create Dynamodb table
         """
         dynamodb_table_name = self.node.try_get_context("dev")["dynamodb_table_name"]
-        dynamodb_table_partition_key = self.node.try_get_context("dev")["table_partition_key"]
+        dynamodb_table_partition_key = self.node.try_get_context("dev")[
+            "table_partition_key"
+        ]
         dynamodb_table_sort_key = self.node.try_get_context("dev")["table_sort_key"]
         dynamodb_table = DynamoDbTable(
             self,
@@ -61,10 +65,10 @@ class PostnlEventBrokerPocStack(Stack):
             + deploy_environment
         )
         lambda_environment_variables = {
-                "dynamo_db_table": dynamodb_table_name,
-                "dynamo_table_partition_key": dynamodb_table_partition_key,
-                "dynamo_table_sort_key": dynamodb_table_sort_key
-            }
+            "dynamo_db_table": dynamodb_table_name,
+            "dynamo_table_partition_key": dynamodb_table_partition_key,
+            "dynamo_table_sort_key": dynamodb_table_sort_key,
+        }
         lambda_id = "EBProducerLambda"
         lambda_code_base = "src/producer_lambda"
         eb_producer_lambda = LambdaFunction(
@@ -75,7 +79,7 @@ class PostnlEventBrokerPocStack(Stack):
                 lambda_iam_role.get_lambda_role,
                 lambda_environment_variables,
                 lambda_code_base,
-                lambda_id
+                lambda_id,
             ),
         )
 
@@ -126,9 +130,17 @@ class PostnlEventBrokerPocStack(Stack):
             + deploy_environment
         )
         eb_step_function = StepFunction(
-            self,
-            "EBStepFunction",
-            StepFunctionProps(
-                state_machine_name
-            )
+            self, "EBStepFunction", StepFunctionProps(state_machine_name)
         )
+        """
+        Step 7. Create s3 bucket for artifacts
+        """
+        bucket_name = (
+            "artifacts-s3-"
+            + self.node.try_get_context(deploy_environment)["app_name"].replace("_", "-")
+            + "-"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "-"
+            + deploy_environment
+        )
+        s3_bucket = S3Bucket(self, "EBArtifactBucket", S3BucketProps(bucket_name))
