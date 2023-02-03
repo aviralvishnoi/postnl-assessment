@@ -6,6 +6,7 @@ from constructs import Construct
 @dataclass
 class IamRoleProps:
     lambda_role_name: str
+    eb_sqs_arn: str
 
 
 class IamRole(Construct):
@@ -30,5 +31,25 @@ class IamRole(Construct):
                     "service-role/AWSLambdaBasicExecutionRole"
                 )
             ],
+        )
+
+        lambda_iam_role.attach_inline_policy(
+            iam.Policy(
+                self,
+                "CustomInlinePolicy",
+                statements=[
+                    iam.PolicyStatement(
+                        actions=[
+                            "sqs:SendMessage",
+                            "sqs:GetQueueAttributes",
+                            "sqs:GetQueueUrl",
+                            "sqs:ListQueues"
+                        ],
+                        resources=[
+                            f"{props.eb_sqs_arn}",
+                        ]
+                    )
+                ]
+            )
         )
         return lambda_iam_role
