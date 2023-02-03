@@ -23,9 +23,8 @@ class LambdaFunction(Construct):
     def get_lambda_function(self):
         return LambdaFunction.__lambda_function
 
-
     def create_lambda_function(self, props):
-        hello_lambda = lambda_function.Function(
+        eb_lambda = lambda_function.Function(
             self,
             id=f"{props.lambda_id}",
             function_name=f"{props.lambda_name}",
@@ -35,4 +34,4 @@ class LambdaFunction(Construct):
             role=props.lambda_iam_role,
             environment=props.lambda_environment_variables
         )
-        return hello_lambda
+        return eb_lambda
