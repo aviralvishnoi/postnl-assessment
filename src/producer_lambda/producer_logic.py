@@ -1,6 +1,7 @@
 from aws_utils.dynamo_helper import DynamoDb
 from utils.error_response import ErrorResponse
 from utils.validator import Validator
+from aws_utils.sqs_helper import SQS
 import os
 import json
 import uuid
@@ -9,6 +10,7 @@ DYNAMO_DB_TABLE = os.environ["dynamo_db_table"]
 PARTION_KEY = os.environ["dynamo_table_partition_key"]
 SORT_KEY = os.environ["dynamo_table_sort_key"]
 VALID_TYPE_OF_ENDPOINT = ["HTTP"]
+EB_SQS_URL = os.environ["sqs_queue_url"]
 
 
 class ProducerLogic:
@@ -80,4 +82,9 @@ class ProducerLogic:
             dynamod_db_object = DynamoDb(table_name=DYNAMO_DB_TABLE, data=data)
             dynamod_db_object.load_data_to_dynamo_table()
             # TODO: Async call to step function
+            # TODO: Send message to sqs
+            sqs_object = SQS(queue_url=EB_SQS_URL)
+            response = sqs_object.send_message_to_queue(validated_data)
+            if isinstance(response, str):
+                return response
             return True
