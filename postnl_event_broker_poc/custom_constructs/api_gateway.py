@@ -29,7 +29,7 @@ class ApiGateway(Construct):
                 schema=_apigateway.JsonSchemaVersion.DRAFT4,
                 title="Producer",
                 type=_apigateway.JsonSchemaType.OBJECT,
-                required=["producer_application_name", "producer_name", "business_unit", "type_of_endpoint", "event_contract"],
+                required=["producer_application_name", "producer_name", "business_unit", "type_of_endpoint", "event_contract", "environment"],
                 properties={
                     "producer_application_name": _apigateway.JsonSchema(
                         type=_apigateway.JsonSchemaType.STRING
@@ -48,6 +48,9 @@ class ApiGateway(Construct):
                     ),
                     "event_contract": _apigateway.JsonSchema(
                         type=_apigateway.JsonSchemaType.OBJECT
+                    ),
+                    "environment": _apigateway.JsonSchema(
+                        type=_apigateway.JsonSchemaType.STRING
                     )
                 },
             ),

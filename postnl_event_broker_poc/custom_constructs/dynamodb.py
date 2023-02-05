@@ -29,6 +29,7 @@ class DynamoDbTable(Construct):
             self,
             "dynamoDbTableId",
             table_name=props.dynamodb_table_name,
+            encryption=dynamodb.TableEncryption.AWS_MANAGED,
             partition_key=dynamodb.Attribute(
                 name=props.dynamodb_table_partition_key_col_name,
                 type=dynamodb.AttributeType.STRING

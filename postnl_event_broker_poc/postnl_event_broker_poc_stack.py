@@ -227,4 +227,10 @@ class PostnlEventBrokerPocStack(Stack):
                 # source_sqs=eb_sqs_fifo.get_queue_object
             ),
         )
-        eb_producer_trigger_sm_lambda.get_lambda_function.add_event_source(SqsEventSource(eb_sqs_fifo.get_queue_object, batch_size=1, report_batch_item_failures=True))
+        eb_producer_trigger_sm_lambda.get_lambda_function.add_event_source(
+            SqsEventSource(
+                eb_sqs_fifo.get_queue_object,
+                batch_size=1,
+                report_batch_item_failures=True,
+            )
+        )

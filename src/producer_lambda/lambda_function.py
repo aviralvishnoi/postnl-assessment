@@ -9,7 +9,7 @@ def lambda_handler(event, context):
         response = {
             "statusCode": 201,
             "headers": {"Content-Type": "application/json"},
-            "body": '{"message": "Hello, World!"}'
+            "body": '{"message": "Event Registered Successfully!"}'
         }
     else:
         response = {

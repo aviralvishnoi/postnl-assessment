@@ -6,7 +6,7 @@
         },
         "ProducerApplicationName": {
             "Type": "String",
-            "Default": "dev"
+            "Default": "IncomingOrders"
         },
         "ProducerName": {
             "Type": "String",
@@ -22,7 +22,7 @@
         },
         "LatestS3ObjectVersion": {
             "Type": "String",
-            "Default": "GfJh.CHGaakWAm0xAjfR1KhlXIIl5NWQ"
+            "Default": "EXpXMJQ7tLAzOPTdlmW.qEkYGvpy7O.x"
         }
     },
     "Resources": {
@@ -70,9 +70,9 @@
                 },
                 "Environment": {
                     "Variables": {
-                        "dynamo_db_table": "application_schema",
-                        "dynamo_table_partition_key": "uuid",
-                        "dynamo_table_sort_key": "application_type"
+                        "DETAIL_TYPE": {
+                            "Fn::Sub": "${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${TypeOfEndpoint}-${Environment}"
+                        }
                     }
                 },
                 "FunctionName": {
@@ -117,7 +117,9 @@
                 "DeploymentId": {
                     "Ref": "EventPublisherApiDeployment"
                 },
-                "StageName": {"Ref": "Environment"}
+                "StageName": {
+                    "Ref": "Environment"
+                }
             }
         },
         "EventPublisherApiResource": {
@@ -167,6 +169,39 @@
                                 "Ref": "EventPublisherApiStage"
                             },
                             "/POST/event_publisher"
+                        ]
+                    ]
+                }
+            }
+        },
+        "EventPublisherLambdaPermissionTestInvoke": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "EventPublisherLambda",
+                        "Arn"
+                    ]
+                },
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "arn:aws:execute-api:",
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            ":",
+                            {
+                                "Ref": "AWS::AccountId"
+                            },
+                            ":",
+                            {
+                                "Ref": "EventPublisherRestApi"
+                            },
+                            "/test-invoke-stage/POST/event_publisher"
                         ]
                     ]
                 }
@@ -280,7 +315,9 @@
                 "RestApiId": {
                     "Ref": "EventPublisherRestApi"
                 },
-                "Name": {"Fn::Sub":"EPValidator-${Environment}"},
+                "Name": {
+                    "Fn::Sub": "EPValidator-${Environment}"
+                },
                 "ValidateRequestBody": true,
                 "ValidateRequestParameters": true
             }
@@ -319,6 +356,31 @@
                     "title": "Publisher",
                     "type": "object"
                 }
+            }
+        },
+        "EventPublisherCWLGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+                "RetentionInDays": 7
+            }
+        },
+        "EventPublisherEventBridgeRule": {
+            "Type": "AWS::Events::Rule",
+            "Properties": {
+                "EventPattern": {
+                    "detail-type": [
+                        {
+                            "Fn::Sub": "${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${TypeOfEndpoint}-${Environment}"
+                        }
+                    ]
+                },
+                "Name": {
+                    "Fn::Sub": "rule-${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${TypeOfEndpoint}-${Environment}"
+                },
+                "State": "ENABLED",
+                "Targets": [
+
+                ]
             }
         }
     },
