@@ -4,22 +4,22 @@ from constructs import Construct
 
 
 @dataclass
-class SMIamRoleProps:
+class SMLambdaIamRoleProps:
     lambda_role_name: str
     eb_sqs_arn: str
     eb_state_machine_arn: str
 
 
-class SMIamRole(Construct):
+class SMLambdaIamRole(Construct):
     __lambda_role = iam.Role
 
-    def __init__(self, scope: Construct, construct_id: str, props: SMIamRoleProps):
+    def __init__(self, scope: Construct, construct_id: str, props: SMLambdaIamRoleProps):
         super().__init__(scope, construct_id)
-        SMIamRole.__lambda_role = self.create_iam_role(props)
+        SMLambdaIamRole.__lambda_role = self.create_iam_role(props)
 
     @property
     def get_lambda_role(self):
-        return SMIamRole.__lambda_role
+        return SMLambdaIamRole.__lambda_role
 
     def create_iam_role(self, props):
         lambda_iam_role = iam.Role(
