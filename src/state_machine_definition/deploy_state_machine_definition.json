@@ -1,0 +1,74 @@
+{
+    "StartAt": "StartState",
+    "States": {
+      "StartState": {
+        "Type": "Pass",
+        "Next": "DescribeStacks"
+      },
+      "DescribeStacks": {
+        "Type": "Task",
+        "Parameters": {
+          "StackName.$": "States.Format('{}{}{}{}',$.producer_application_name, $.producer_name, $.business_unit, $.type_of_endpoint)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cloudformation:describeStacks",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.TaskFailed"
+            ],
+            "Next": "Choice",
+            "ResultPath": "$.StackNotExists"
+          }
+        ],
+        "Next": "Choice"
+      },
+      "Choice": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.StackNotExists",
+            "IsPresent": true,
+            "Next": "CreateStack"
+          }
+        ],
+        "Default": "Success"
+      },
+      "CreateStack": {
+        "Type": "Task",
+        "Parameters": {
+          "StackName.$": "States.Format('{}{}{}{}',$.producer_application_name, $.producer_name, $.business_unit, $.type_of_endpoint)",
+          "TemplateURL": "https://artifacts-s3-postnl-eb-assignment-eb-dev.s3.eu-central-1.amazonaws.com/cloudformation/producer.json",
+          "Parameters": [
+            {
+              "ParameterKey": "Environment",
+              "ParameterValue.$": "$.environment"
+            },
+            {
+              "ParameterKey": "ProducerName",
+              "ParameterValue.$": "$.producer_name"
+            },
+            {
+              "ParameterKey": "ProducerApplicationName",
+              "ParameterValue.$": "$.producer_application_name"
+            },
+            {
+              "ParameterKey": "BusinessUnit",
+              "ParameterValue.$": "$.business_unit"
+            },
+            {
+              "ParameterKey": "TypeOfEndpoint",
+              "ParameterValue.$": "$.type_of_endpoint"
+            }
+          ],
+          "Capabilities": [
+            "CAPABILITY_NAMED_IAM"
+          ]
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cloudformation:createStack",
+        "End": true
+      },
+      "Success": {
+        "Type": "Succeed"
+      }
+    }
+  }

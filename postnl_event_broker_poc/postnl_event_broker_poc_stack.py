@@ -1,6 +1,7 @@
 from aws_cdk import Stack
 from constructs import Construct
 from utils.environment import MyEnv
+from utils.file_reader import read_json_file
 from custom_constructs.api_gateway import ApiGateway, ApiGatewayProps
 from custom_constructs.lambda_function import LambdaFunction, LambdaProps
 from custom_constructs.iam_role import IamRole, IamRoleProps
@@ -9,9 +10,10 @@ from custom_constructs.step_function import StepFunction, StepFunctionProps
 from custom_constructs.s3 import S3Bucket, S3BucketProps
 from custom_constructs.sqs import SQS, SQSProps
 from custom_constructs.iam_role_start_state_machine_role import (
-    SMIamRole,
-    SMIamRoleProps,
+    SMLambdaIamRole,
+    SMLambdaIamRoleProps,
 )
+from custom_constructs.state_machine_role import SMIamRole, SMIamRoleProps
 from aws_cdk.aws_lambda_event_sources import SqsEventSource
 
 
@@ -150,6 +152,22 @@ class PostnlEventBrokerPocStack(Stack):
             eb_producer_lambda.get_lambda_function
         )
         """
+        Step 8 : Create IAM role for step functin
+        """
+        state_machine_role_name = (
+            "role_state_machine_"
+            + self.node.try_get_context(deploy_environment)["app_name"]
+            + "_"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "_"
+            + deploy_environment
+        )
+        eb_sm_iam_role = SMIamRole(
+            self,
+            "EBDeployStateMachine",
+            SMIamRoleProps(state_machine_role_name=state_machine_role_name),
+        )
+        """
         Step 7 : Create step function to deploy producer stack
         """
         state_machine_name = (
@@ -161,8 +179,17 @@ class PostnlEventBrokerPocStack(Stack):
             + deploy_environment
         )
         eb_step_function = StepFunction(
-            self, "EBStepFunction", StepFunctionProps(state_machine_name)
+            self,
+            "EBDeployStepFunction",
+            StepFunctionProps(
+                state_machine_name=state_machine_name,
+                state_machine_role=eb_sm_iam_role.get_state_machine_role_arn,
+                state_definition_json=read_json_file(
+                    "src/state_machine_definition/deploy_state_machine_definition.json"
+                ),
+            ),
         )
+
         """
         Step 8. Create s3 bucket for artifacts
         """
@@ -188,10 +215,10 @@ class PostnlEventBrokerPocStack(Stack):
             + "_"
             + deploy_environment
         )
-        trigger_sm_iam_role_name = SMIamRole(
+        trigger_sm_iam_role_name = SMLambdaIamRole(
             self,
             "TriggerSMLambdaIamRole",
-            SMIamRoleProps(
+            SMLambdaIamRoleProps(
                 trigger_sm_iam_role_name,
                 eb_sqs_arn=eb_sqs_fifo.get_queue_arn,
                 eb_state_machine_arn=eb_step_function.get_state_machine_arn,
