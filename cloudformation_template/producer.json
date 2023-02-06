@@ -22,7 +22,7 @@
         },
         "LatestS3ObjectVersion": {
             "Type": "String",
-            "Default": "EXpXMJQ7tLAzOPTdlmW.qEkYGvpy7O.x"
+            "Default": "R0AHmYbry0ZgEQx8KcogOVzd_m16M02G"
         }
     },
     "Resources": {
