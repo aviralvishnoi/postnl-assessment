@@ -152,7 +152,7 @@ class PostnlEventBrokerPocStack(Stack):
             eb_producer_lambda.get_lambda_function
         )
         """
-        Step 8 : Create IAM role for step functin
+        Step 7 : Create IAM role for step functin
         """
         state_machine_role_name = (
             "role_state_machine_"
@@ -168,7 +168,7 @@ class PostnlEventBrokerPocStack(Stack):
             SMIamRoleProps(state_machine_role_name=state_machine_role_name),
         )
         """
-        Step 7 : Create step function to deploy producer stack
+        Step 8 : Create step function to deploy producer stack
         """
         state_machine_name = (
             "state_machine_"
@@ -191,7 +191,7 @@ class PostnlEventBrokerPocStack(Stack):
         )
 
         """
-        Step 8. Create s3 bucket for artifacts
+        Step 9. Create s3 bucket for artifacts
         """
         bucket_name = (
             "artifacts-s3-"
@@ -205,7 +205,7 @@ class PostnlEventBrokerPocStack(Stack):
         )
         s3_bucket = S3Bucket(self, "EBArtifactBucket", S3BucketProps(bucket_name))
         """
-        Step 9. Create role for lambda function to start state machine
+        Step 10. Create role for lambda function to start state machine
         """
         trigger_sm_iam_role_name = (
             "trigger_sm_iamrole_"
@@ -226,7 +226,7 @@ class PostnlEventBrokerPocStack(Stack):
         )
 
         """
-        Step 10. Create lambda to start state machine to create infra for producer
+        Step 11. Create lambda to start state machine to create infra for producer
         """
         trigger_sm_lambda_function_name = (
             "trigger_sm_lambda_"
@@ -260,4 +260,104 @@ class PostnlEventBrokerPocStack(Stack):
                 batch_size=1,
                 report_batch_item_failures=True,
             )
+        )
+        """
+        Step 12. Create FIFO queue for consumer
+        """
+        consumer_queue_name = (
+            "sqs-consumer-"
+            + self.node.try_get_context(deploy_environment)["app_name"].replace(
+                "_", "-"
+            )
+            + "-"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "-"
+            + deploy_environment
+            + ".fifo"
+        )
+        consumer_dead_letter_queue_name = (
+            "dlq-consumer-"
+            + self.node.try_get_context(deploy_environment)["app_name"].replace(
+                "_", "-"
+            )
+            + "-"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "-"
+            + deploy_environment
+            + ".fifo"
+        )
+        eb_consumer_sqs_fifo = SQS(
+            self,
+            "EBConsumerFifoQueue",
+            SQSProps(consumer_queue_name, consumer_dead_letter_queue_name),
+        )
+        """
+        Step 13. Create IAM Role for Consumer Lambda Function
+        """
+        consumer_iam_role_name = (
+            "iamrole_consumer_"
+            + self.node.try_get_context(deploy_environment)["app_name"]
+            + "_"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "_"
+            + deploy_environment
+        )
+        consumer_lambda_iam_role = IamRole(
+            self,
+            "ConsumerLambdaIamRole",
+            IamRoleProps(
+                consumer_iam_role_name, eb_sqs_arn=eb_consumer_sqs_fifo.get_queue_arn
+            ),
+        )
+        """
+        Step 14. Create consumer lambda function 
+        """
+        consumer_lambda_function_name = (
+            "lambda_consumer_"
+            + self.node.try_get_context(deploy_environment)["app_name"]
+            + "_"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "_"
+            + deploy_environment
+        )
+        consumer_lambda_environment_variables = {
+            "dynamo_db_table": dynamodb_table_name,
+            "dynamo_table_partition_key": dynamodb_table_partition_key,
+            "dynamo_table_sort_key": dynamodb_table_sort_key,
+            "sqs_queue_url": eb_consumer_sqs_fifo.get_queue_url,
+        }
+        consumer_lambda_id = "EBProducerLambda"
+        consumer_lambda_code_base = "src/consumer_lambda"
+        eb_consumer_lambda = LambdaFunction(
+            self,
+            "EBConsumerLambda",
+            LambdaProps(
+                consumer_lambda_function_name,
+                consumer_lambda_iam_role.get_lambda_role,
+                consumer_lambda_environment_variables,
+                consumer_lambda_code_base,
+                consumer_lambda_id,
+            ),
+        )
+        """
+        Step 15.  Grant Lambda Permission to read/write to DynamoDB table
+        """
+        dynamodb_table.get_dynamodb_table.grant_read_write_data(
+            eb_consumer_lambda.get_lambda_function
+        )
+        """
+        Step 16.
+        """
+        consumer_usage_plan = (
+            "consumer_usage_plan_"
+            + self.node.try_get_context(deploy_environment)["app_name"]
+            + "_"
+            + self.node.try_get_context(deploy_environment)["team"]
+            + "_"
+            + deploy_environment
+        )
+        eb_consumer_api_gateway = eb_api_gateway.add_consumer(
+            consumer_usage_plan,
+            eb_consumer_lambda.get_lambda_function,
+            deploy_environment,
         )
