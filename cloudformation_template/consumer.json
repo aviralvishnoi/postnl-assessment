@@ -1,0 +1,58 @@
+{
+    "Parameters": {
+        "Environment": {
+            "Type": "String",
+            "Default": "dev"
+        },
+        "ProducerApplicationName": {
+            "Type": "String",
+            "Default": "IncomingOrders"
+        },
+        "ProducerName": {
+            "Type": "String",
+            "Default": "Team22"
+        },
+        "BusinessUnit": {
+            "Type": "String",
+            "Default": "Logistics"
+        },
+        "TypeOfEndpoint": {
+            "Type": "String",
+            "Default": "HTTP"
+        },
+        "ConsumerName": {
+            "Type": "String",
+            "Default": "Team99"
+        },
+        "ConsumerBusinessUnit": {
+            "Type": "String",
+            "Default": "Finance"
+        },
+        "ConsumerApplicationName": {
+            "Type": "String",
+            "Default": "Billing"
+        },
+        "SubscriptionType": {
+            "Type": "String",
+            "Default": "SQS"
+        }
+    },
+    "Resources": {
+        "SubscriberSQS": {
+            "Type": "AWS::SQS::Queue",
+            "Properties":{
+                "QueueName": {
+                    "Fn::Sub": "${SubscriptionType}-${ConsumerApplicationName}-${ConsumerName}-${ConsumerBusinessUnit}-${TypeOfEndpoint}-${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${Environment}"
+                }
+            }
+        },
+        "AddTargetToEventRule" : {
+            "Type" : "Custom::InvokeMapperLambda",
+            "Properties" : {
+                "ServiceToken" : "arn:aws:lambda:eu-central-1:320722179933:function:TargetMapperLambda",
+                "SQSArn": {"Fn::GetAtt": ["SubscriberSQS", "Arn"]},
+                "EventRuleName": {"Fn::Sub": "rule-${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${TypeOfEndpoint}-${Environment}"}
+            }
+        }
+    }
+}
