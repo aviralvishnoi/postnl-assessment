@@ -1,10 +1,10 @@
 import json
-from postnl_event_broker_poc.src.consumer_lambda.consumer_logic import ConsumerLogic
+from consumer_logic import ConsumerLogic
 
 
 def lambda_handler(event, context):
-    producer_logic_object = ConsumerLogic(event)
-    flag = producer_logic_object.producer_processor()
+    consumer_logic_object = ConsumerLogic(event)
+    flag = consumer_logic_object.consumer_processor()
     if isinstance(flag, bool):
         response = {
             "statusCode": 201,

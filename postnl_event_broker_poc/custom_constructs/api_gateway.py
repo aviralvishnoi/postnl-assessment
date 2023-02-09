@@ -33,7 +33,14 @@ class ApiGateway(Construct):
                 schema=_apigateway.JsonSchemaVersion.DRAFT4,
                 title="Producer",
                 type=_apigateway.JsonSchemaType.OBJECT,
-                required=["producer_application_name", "producer_name", "business_unit", "type_of_endpoint", "event_contract", "environment"],
+                required=[
+                    "producer_application_name",
+                    "producer_name",
+                    "business_unit",
+                    "type_of_endpoint",
+                    "event_contract",
+                    "environment",
+                ],
                 properties={
                     "producer_application_name": _apigateway.JsonSchema(
                         type=_apigateway.JsonSchemaType.STRING
@@ -55,7 +62,7 @@ class ApiGateway(Construct):
                     ),
                     "environment": _apigateway.JsonSchema(
                         type=_apigateway.JsonSchemaType.STRING
-                    )
+                    ),
                 },
             ),
         )
@@ -73,7 +80,7 @@ class ApiGateway(Construct):
             rest_api_name=f"{props.rest_api_name}",
             deploy_options=eb_deploy_stage,
         )
-        
+
         return eb_apigateway
 
     # Add producer
@@ -91,7 +98,7 @@ class ApiGateway(Construct):
             rest_api=self.__eb_apigateway,
             request_validator_name=f"EBValidator-{props.deploy_environment}",
             validate_request_body=True,
-            validate_request_parameters=True
+            validate_request_parameters=True,
         )
 
         # Create a resource and post method for the api
@@ -133,7 +140,6 @@ class ApiGateway(Construct):
         return eb_request_validator
 
     # Add consumer
-
     def create_consumer_model(self, eb_apigateway, deploy_environment):
         eb_consumer_model = _apigateway.Model(
             self,
@@ -145,7 +151,17 @@ class ApiGateway(Construct):
                 schema=_apigateway.JsonSchemaVersion.DRAFT4,
                 title="Consumer",
                 type=_apigateway.JsonSchemaType.OBJECT,
-                required=["producer_application_name", "producer_name", "business_unit", "type_of_endpoint", "event_contract", "environment"],
+                required=[
+                    "producer_application_name",
+                    "producer_name",
+                    "business_unit",
+                    "type_of_endpoint",
+                    "environment",
+                    "consumer_application_name",
+                    "consumer_name",
+                    "consumer_business_unit",
+                    "subscription_type"
+                ],
                 properties={
                     "producer_application_name": _apigateway.JsonSchema(
                         type=_apigateway.JsonSchemaType.STRING
@@ -176,13 +192,18 @@ class ApiGateway(Construct):
                     ),
                     "subscription_type": _apigateway.JsonSchema(
                         type=_apigateway.JsonSchemaType.STRING
-                    )
+                    ),
                 },
             ),
         )
         return eb_consumer_model
 
-    def add_consumer(self, consumer_usage_plan: str, consumer_lambda: _lambda.Function, deploy_environment: str):
+    def add_consumer(
+        self,
+        consumer_usage_plan: str,
+        consumer_lambda: _lambda.Function,
+        deploy_environment: str,
+    ):
         eb_consumer = self.__eb_apigateway.root.add_resource("consumer")
         # Add lambda integration
         eb_consumer_integration = _apigateway.LambdaIntegration(
@@ -195,14 +216,16 @@ class ApiGateway(Construct):
             rest_api=self.__eb_apigateway,
             request_validator_name=f"EBConsumerValidator-{deploy_environment}",
             validate_request_body=True,
-            validate_request_parameters=True
+            validate_request_parameters=True,
         )
         eb_consumer_method = eb_consumer.add_method(
             "POST",
             eb_consumer_integration,
             api_key_required=True,
             request_models={
-                "application/json": self.create_consumer_model(self.__eb_apigateway, deploy_environment)
+                "application/json": self.create_consumer_model(
+                    self.__eb_apigateway, deploy_environment
+                )
             },
             request_validator=eb_consumer_request_validator,
         )
@@ -214,13 +237,11 @@ class ApiGateway(Construct):
         eb_consumer_key = self.__eb_apigateway.add_api_key("ConsumerApiKey")
         eb_consumer_plan.add_api_key(eb_consumer_key)
         eb_consumer_plan.add_api_stage(
-            stage = self.__eb_apigateway.deployment_stage,
+            stage=self.__eb_apigateway.deployment_stage,
             throttle=[
                 _apigateway.ThrottlingPerMethod(
                     method=eb_consumer_method,
                     throttle=_apigateway.ThrottleSettings(rate_limit=10, burst_limit=2),
                 )
-            ]
+            ],
         )
-
-    

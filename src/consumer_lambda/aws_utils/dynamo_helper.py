@@ -8,9 +8,7 @@ class DynamoDb:
         self.table_name = table_name
         self.data = data
 
-    def load_data_to_dynamo_table(self):
-        print(self.data)
-        
+    def load_data_to_dynamo_table(self):        
         table = dynamodb_db_resource.Table(self.table_name)
         table.put_item(
             Item=self.data

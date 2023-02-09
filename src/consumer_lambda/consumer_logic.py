@@ -35,30 +35,41 @@ class ConsumerLogic:
         """
         Adds PARTITION key and SORT key to the body of schema delivered
         """
-        partition_key = data["consumer_application_name"]+data["consumer_name"]+data["consumer_business_unit"]+data["type_of_endpoint"] + data["subscription_type6"]
-        template_to_add_keys = {
-            PARTION_KEY: partition_key,
-            SORT_KEY: application_type
-        }
+        partition_key = (
+            data["consumer_application_name"]
+            + data["consumer_name"]
+            + data["consumer_business_unit"]
+            + data["type_of_endpoint"]
+            + data["subscription_type"]
+        )
+        template_to_add_keys = {PARTION_KEY: partition_key, SORT_KEY: application_type}
         # merge body and new keys
         data.update(template_to_add_keys)
-        # Change contract event from dict to str
-        data["event_contract"] = json.dumps(data["event_contract"])
         return data
 
     def validate_response(self, data):
         validator_object = Validator(data, VALID_TYPE_OF_ENDPOINT)
         flag = validator_object.validate_data()
         endpoint_flag = validator_object.validate_type_of_endpoint()
-        subscription_type_flag = validator_object.validate_event_contract(SUBSCRIPTION_TYPE)
+        subscription_type_flag = validator_object.validate_subscription_type(
+            SUBSCRIPTION_TYPE
+        )
 
-        if isinstance(flag, bool) and isinstance(endpoint_flag, bool) and isinstance(subscription_type_flag, bool):
+        if (
+            isinstance(flag, bool)
+            and isinstance(endpoint_flag, bool)
+            and isinstance(subscription_type_flag, bool)
+        ):
             return data
         else:
             error_response = {
                 "INPUT_VALIDATION_FAILED": flag if isinstance(flag, bool) else False,
-                "TYPE_OF_ENDPOINT_ALLOWED": endpoint_flag if isinstance(endpoint_flag, bool) else False,
-                "SUBSCRIPTION_TYPE_ALLOWED": subscription_type_flag if isinstance(subscription_type_flag, bool) else False
+                "TYPE_OF_ENDPOINT_ALLOWED": endpoint_flag
+                if isinstance(endpoint_flag, bool)
+                else False,
+                "SUBSCRIPTION_TYPE_ALLOWED": subscription_type_flag
+                if isinstance(subscription_type_flag, bool)
+                else False,
             }
             print(error_response)
             return error_response
@@ -74,10 +85,10 @@ class ConsumerLogic:
         if (
             validated_data.get("INPUT_VALIDATION_FAILED", False)
             or validated_data.get("TYPE_OF_ENDPOINT_ALLOWED", False)
-            or validated_data.get("EVENT_CONTRACT", False)
+            or validated_data.get("SUBSCRIPTION_TYPE_ALLOWED", False)
         ):
             response_object = ErrorResponse(validated_data)
-            return response_object.prepare_error_response(VALID_TYPE_OF_ENDPOINT)
+            return response_object.prepare_error_response(VALID_TYPE_OF_ENDPOINT, SUBSCRIPTION_TYPE)
         else:
             data = self.prepare_data(validated_data, application_type)
             dynamod_db_object = DynamoDb(table_name=DYNAMO_DB_TABLE, data=data)

@@ -25,9 +25,9 @@ class Validator:
         else:
             return False
 
-    def validate_subscription_type(self, valid_subscription_type):
+    def validate_subscription_type(self, valid_subscription_type: list):
         subscription_type = self.data.get("subscription_type", None)
-        if subscription_type not in self.valid_subscription_type:
-            return True
-        else:
+        if subscription_type not in valid_subscription_type:
             return valid_subscription_type
+        else:
+            return True
