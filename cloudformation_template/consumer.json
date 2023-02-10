@@ -40,18 +40,57 @@
     "Resources": {
         "SubscriberSQS": {
             "Type": "AWS::SQS::Queue",
-            "Properties":{
+            "Properties": {
                 "QueueName": {
                     "Fn::Sub": "${SubscriptionType}-${ConsumerApplicationName}-${ConsumerName}-${ConsumerBusinessUnit}-${TypeOfEndpoint}-${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${Environment}"
                 }
             }
         },
-        "AddTargetToEventRule" : {
-            "Type" : "Custom::InvokeMapperLambda",
-            "Properties" : {
-                "ServiceToken" : "arn:aws:lambda:eu-central-1:320722179933:function:TargetMapperLambda",
-                "SQSArn": {"Fn::GetAtt": ["SubscriberSQS", "Arn"]},
-                "EventRuleName": {"Fn::Sub": "rule-${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${TypeOfEndpoint}-${Environment}"}
+        "AddTargetToEventRule": {
+            "Type": "Custom::InvokeMapperLambda",
+            "Properties": {
+                "ServiceToken": "arn:aws:lambda:eu-central-1:320722179933:function:ConsumerEventMapperManual",
+                "SQSArn": {
+                    "Fn::GetAtt": [
+                        "SubscriberSQS",
+                        "Arn"
+                    ]
+                },
+                "EventRuleName": {
+                    "Fn::Sub": "rule-${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${TypeOfEndpoint}-${Environment}"
+                }
+            }
+        },
+        "SampleSQSPolicy": {
+            "Type": "AWS::SQS::QueuePolicy",
+            "Properties": {
+                "Queues": [{
+                    "Ref": "SubscriberSQS"
+                }],
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "SQS:SendMessage"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": {
+                                "Fn::GetAtt": [
+                                    "SubscriberSQS",
+                                    "Arn"
+                                ]
+                            },
+                            "Principal": {
+                                "Service": "events.amazonaws.com"
+                            },
+                            "Condition":  {
+                                "ArnEquals": {
+                                  "aws:SourceArn": {"Fn::Sub":"arn:aws:events:eu-central-1:320722179933:rule/rule-${ProducerApplicationName}-${ProducerName}-${BusinessUnit}-${TypeOfEndpoint}-${Environment}"}
+                                }
+                              }
+                        }
+                    ]
+                }
             }
         }
     }

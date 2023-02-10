@@ -1,0 +1,48 @@
+Register producer event (Fully automated)
+ https://sn5z4eb90c.execute-api.eu-central-1.amazonaws.com/dev/producer
+
+ {
+    "environment": "dev",
+    "producer_application_name": "PackageDelivery",
+    "producer_name": "Team007",
+    "business_unit": "Supply",
+    "description": "This will send event for Package deliveries",
+    "type_of_endpoint": "HTTP",
+    "event_contract": {
+        "schema": {
+            "OrderId": "STRING",
+            "OrderStatus": "STRING",
+            "OrderTime": "DATETIME",
+            "OrderSource": "STRING"
+        }
+    }
+}
+
+Register consumer event
+https://sn5z4eb90c.execute-api.eu-central-1.amazonaws.com/dev/consumer
+
+{
+    "environment": "dev",
+    "producer_application_name": "PackageDelivery",
+    "producer_name": "Team007",
+    "business_unit": "Supply",
+    "description": "This will subscribe for above request",
+    "type_of_endpoint": "HTTP",
+    "consumer_name": "Team21",
+    "consumer_business_unit": "Delivery",
+    "consumer_application_name": "TrackOrder",
+    "subscription_type": "SQS"
+}
+
+Team007-Team21-EventMapper
+https://artifacts-s3-postnl-eb-assignment-eb-dev.s3.eu-central-1.amazonaws.com/cloudformation/consumer.json
+
+BusinessUnit	                Supply	-
+ConsumerApplicationName	        TrackOrder	-
+ConsumerBusinessUnit	        Delivery	-
+ConsumerName	                Team21	-
+Environment                 	dev	-
+ProducerApplicationName	        PackageDelivery	-
+ProducerName	                Team007	-
+SubscriptionType	            SQS	-
+TypeOfEndpoint	                HTTP

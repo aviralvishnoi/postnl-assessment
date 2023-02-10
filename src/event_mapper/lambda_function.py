@@ -1,5 +1,10 @@
+from crhelper import CfnResource
 import boto3
 
+helper = CfnResource(json_logging=False, log_level="INFO", boto_level="CRITICAL")
+
+
+    
 event_bridge_client = boto3.client("events")
 
 def generate_rule_name(event):
@@ -8,11 +13,11 @@ def generate_rule_name(event):
 def extract_sqs_arn(event):
     return event["ResourceProperties"]["SQSArn"]
 
-def lambda_handler(event, context):
+@helper.create
+def create(event: dict, _) -> None:
     sqs_arn = extract_sqs_arn(event)
     rule_name = generate_rule_name(event)
-    if event["RequestType"] != "Delete":
-        response = event_bridge_client.put_targets(
+    response = event_bridge_client.put_targets(
             Rule=rule_name,
             EventBusName="arn:aws:events:eu-central-1:320722179933:event-bus/default",
             Targets=[
@@ -22,25 +27,16 @@ def lambda_handler(event, context):
                 }
             ]
         )
-        print(response)
-        response_data = {'Status': 'SUCCESS', 'Data': {'Message': 'Target Registered'}}
-    else:
-        #TODO: Remove targets
-        response = event_bridge_client.remove_targets(
-            Rule=rule_name,
-            EventBusName="arn:aws:events:eu-central-1:320722179933:event-bus/default",
-            Ids=[sqs_arn]
-        )
-        response_data = {'Status': 'SUCCESS', 'Data': {'Message': 'Nothing Required'}}
-        # Send response back to CloudFormation
-    response = boto3.client('cloudformation').send_response(
-        StackName=event['StackId'],
-        LogicalResourceId=event['LogicalResourceId'],
-        PhysicalResourceId='unique_id',
-        Status=response_data['Status'],
-        Reason='Status updated',
-        Data=response_data['Data']
-    )
+    print(response)
 
-    return response
+@helper.update
+def update(event: dict, _):
+    pass
 
+@helper.delete
+def delete(event: dict, _):
+    pass
+    
+def lambda_handler(event, context):
+    print(event)
+    helper(event, context)
